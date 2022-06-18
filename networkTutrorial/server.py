@@ -32,6 +32,7 @@ def threaded_client(conn, p, gameId):
     reply = ""
     while True:
         try:
+            # dado recebido do cliente
             data = conn.recv(4096).decode()
 
             # Toda volta no loop é verificado se o jogo ainda existe
@@ -66,6 +67,7 @@ def threaded_client(conn, p, gameId):
     conn.close()
 
 
+# Continuamente procura por conexões
 while True:
     # A conexão é aceita
     conn, addr = s.accept()

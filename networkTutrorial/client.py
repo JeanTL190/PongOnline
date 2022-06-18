@@ -8,6 +8,39 @@ win = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Client")
 
 
+class AntiStress:
+    # Inicialização dos parâmetros do objeto antiestresse
+    def __init__(self, x, y, width, height, color):
+        self.x = x
+        self.y = y
+        self.color = color
+        self.width = 50
+        self.height = 50
+        self.rect = (x, y, width, height)
+        self.vel = 3
+
+    def draw(self, win):
+        pygame.draw.rect(win, self.color, self.rect)
+
+    def move(self):
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            self.x -= self.vel
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.x += self.vel
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            self.y -= self.vel
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            self.y += self.vel
+
+        self.update()
+
+    def update(self):
+        # Atualiza a posição do antiestresse
+        self.rect = (self.x, self.y, self.width, self.height)
+
+
 class Button:
     # Inicialização dos parâmetros dos botões
     def __init__(self, text, x, y, color):
@@ -17,6 +50,8 @@ class Button:
         self.color = color
         self.width = 150
         self.height = 100
+        self.btn = (x, y, width, height)
+        self.vel = 3
 
     # Aparência dos botões
     def draw(self, win):
@@ -37,7 +72,7 @@ class Button:
             return False
 
 
-def redrawWindow(win, game, p):
+def redrawWindow(win, game, p, anti):
     win.fill((128, 128, 128))
 
     if not(game.connected()):
@@ -82,6 +117,8 @@ def redrawWindow(win, game, p):
         for btn in btns:
             btn.draw(win)
 
+        anti.draw(win)
+
     pygame.display.update()
 
 
@@ -96,8 +133,10 @@ def main():
     clock = pygame.time.Clock()
     n = Network()
     # Obtém o número do jogador
-    player = n.getP
+    player = int(n.getP())
     print("You are player", player)
+
+    anti = AntiStress(50, 50, width, height, (0, 0, 255))
 
     while run:
         clock.tick(60)
@@ -111,7 +150,7 @@ def main():
             break
 
         if game.bothWent():
-            redrawWindow(win, game, player)
+            redrawWindow(win, game, player, anti)
             pygame.time.delay(500)
             try:
                 # Se ambos os jogadores já jogaram, envia o reset
@@ -123,14 +162,14 @@ def main():
 
             # Determina o resultado do jogo
             font = pygame.font.SysFont("arial", 90)
-            if (game.winner() == 1 and player == "1") or (game.winner() == 0 and player == "0"):
+            if (game.winner() == 1 and player == 1) or (game.winner() == 0 and player == 0):
                 text = font.render("You Won!", True, (255, 0, 0))
             elif game.winner() == -1:
                 text = font.render("Tie Game!", True, (255, 0, 0))
             else:
                 text = font.render("You Lost...", True, (255, 0, 0))
 
-            win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
+            win.blit(text, (width/2 - text.get_width()/2, height/8 - text.get_height()/8))
             pygame.display.update()
             pygame.time.delay(2000)
 
@@ -152,7 +191,8 @@ def main():
                             if not game.p2Went:
                                 n.send(btn.text)
 
-        redrawWindow(win, game, player)
+        anti.move()
+        redrawWindow(win, game, player, anti)
 
 
 def menu_screen():
@@ -164,7 +204,7 @@ def menu_screen():
         win.fill((128, 128, 128))
         font = pygame.font.SysFont("arial", 60)
         text = font.render("Click to Play!", True, (255, 0, 0))
-        win.blit(text, (100, 200))
+        win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
         pygame.display.update()
 
         for event in pygame.event.get():

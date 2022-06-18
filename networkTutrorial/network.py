@@ -29,6 +29,6 @@ class Network:
             # Envia os dados codificados como string para o servidor
             self.client.send(str.encode(data))
             # Recebe de volta os dados do objeto
-            return pickle.loads(self.client.recv(2048 * 2))
+            return pickle.loads(self.client.recv(2048*2))
         except socket.error as e:
             print(e)
