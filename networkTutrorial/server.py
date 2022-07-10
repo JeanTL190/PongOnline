@@ -2,9 +2,12 @@ import socket
 from _thread import *
 import pickle
 from game import Game
+from antiStress import AntiStress
 
-server = "192.168.0.104"
+server = "192.168.0.122"
 port = 5555
+
+server_ip = socket.gethostbyname(server)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -16,10 +19,10 @@ except socket.error as e:
 s.listen()
 print("Waiting for a connection, Server Started")
 
-# Armazena os endereços de ip dos clientes conectados
-connected = set()
 # Armazena os jogos
 games = {}
+# Armazena AntiStress
+antiStresses = {}
 # Acompanhará o id atual
 idCount = 0
 
@@ -28,28 +31,32 @@ def threaded_client(conn, p, gameId):
     global idCount
     # Dessa forma o jogador sabe se é o 1 ou o 2
     conn.send(str.encode(str(p)))
-
-    reply = ""
+    conn.send(pickle.dumps(antiStresses[gameId][p]))
+    antiStress = ""
     while True:
         try:
             # dado recebido do cliente
-            data = conn.recv(4096).decode()
+            data = pickle.loads(conn.recv(4096))
 
             # Toda volta no loop é verificado se o jogo ainda existe
             if gameId in games:
                 game = games[gameId]
-
                 if not data:
                     break
                 else:
+                    print(data)
+                    print(p)
                     # Se o dado enviado for reset, o jogador vai querer jogar outra vez
                     if data == "reset":
                         game.resetWent()
                     # Se o dado enviado for get, o jogador vai querer um jogo do servidor
                     elif data != "get":
-                        game.play(p, data)
-
+                        if data == 'Rock' or data == 'Paper' or data == "Scissors":
+                            game.play(p, data)
+                        else:
+                            antiStresses[gameId][p] = data
                     # Empacota o jogo e envia para os clientes
+                    game.antiStresses = antiStresses[gameId]
                     conn.sendall(pickle.dumps(game))
             else:
                 break
@@ -60,6 +67,7 @@ def threaded_client(conn, p, gameId):
     print("Lost connection")
     try:
         del games[gameId]
+        del antiStresses[gameId]
         print("Closing Game", gameId)
     except:
         pass
@@ -82,7 +90,8 @@ while True:
     # Dependendo da quantidade de jogadores conectados
     # se você for o jogador 1 ou 2, ele criará uma nova sessão de jogo
     if idCount % 2 == 1:
-        games[gameId] = Game(gameId)
+        antiStresses[gameId] = [AntiStress(0, 0, 50, 50, (0, 0, 255)), AntiStress(100, 100, 50, 50, (255, 0, 0))]
+        games[gameId] = Game(gameId, antiStresses[gameId])
         print("Creating a new game...")
     else:
         games[gameId].ready = True

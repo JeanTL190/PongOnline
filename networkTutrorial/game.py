@@ -1,5 +1,5 @@
 class Game:
-    def __init__(self, id):
+    def __init__(self, id, antiStresses):
         # jogador fez uma jogada?
         self.p1Went = False
         self.p2Went = False
@@ -12,6 +12,12 @@ class Game:
         self.moves = [None, None]
         self.wins = [0, 0]
         self.ties = 0
+        self.antiStresses = antiStresses
+        print("Construtor")
+
+    # Captura o anti stress especifico
+    def get_anti_stress(self, p):
+        return self.antiStresses[p]
 
     # Captura o movimento feito pelo jogador
     def get_player_move(self, p):

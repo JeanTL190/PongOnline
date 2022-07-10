@@ -1,5 +1,7 @@
 import pygame
 from network import Network
+from button import Button
+
 pygame.font.init()
 
 width = 700
@@ -8,78 +10,15 @@ win = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Client")
 
 
-class AntiStress:
-    # Inicialização dos parâmetros do objeto antiestresse
-    def __init__(self, x, y, width, height, color):
-        self.x = x
-        self.y = y
-        self.color = color
-        self.width = 50
-        self.height = 50
-        self.rect = (x, y, width, height)
-        self.vel = 3
-
-    def draw(self, win):
-        pygame.draw.rect(win, self.color, self.rect)
-
-    def move(self):
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.x -= self.vel
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.x += self.vel
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.y -= self.vel
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.y += self.vel
-
-        self.update()
-
-    def update(self):
-        # Atualiza a posição do antiestresse
-        self.rect = (self.x, self.y, self.width, self.height)
-
-
-class Button:
-    # Inicialização dos parâmetros dos botões
-    def __init__(self, text, x, y, color):
-        self.text = text
-        self.x = x
-        self.y = y
-        self.color = color
-        self.width = 150
-        self.height = 100
-        self.btn = (x, y, width, height)
-        self.vel = 3
-
-    # Aparência dos botões
-    def draw(self, win):
-        pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
-        font = pygame.font.SysFont("arial", 40)
-        text = font.render(self.text, True, (255, 255, 255))
-        win.blit(text,
-                 (self.x + round(self.width/2) - round(text.get_width()/2),
-                  self.y + round(self.height/2) - round(text.get_height()/2)))
-
-    # Configuração do click nos botões
-    def click(self, pos):
-        x1 = pos[0]
-        y1 = pos[1]
-        if self.x <= x1 <= self.x + self.width and self.y <= y1 <= self.y + self.height:
-            return True
-        else:
-            return False
-
-
-def redrawWindow(win, game, p, anti):
+def redrawWindow(win, game, p, antiStress1, antiStress2):
     win.fill((128, 128, 128))
-
     if not(game.connected()):
         font = pygame.font.SysFont("arial", 80)
         text = font.render("Waiting for Player...", True, (255, 0, 0))
         win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
     else:
+        antiStress1.draw(win)
+        antiStress2.draw(win)
         font = pygame.font.SysFont("arial", 60)
         text = font.render("Your Move", True, (0, 255, 255))
         win.blit(text, (80, 200))
@@ -117,14 +56,12 @@ def redrawWindow(win, game, p, anti):
         for btn in btns:
             btn.draw(win)
 
-        anti.draw(win)
-
     pygame.display.update()
 
 
 btns = [Button("Rock", 50, 500, (0, 0, 0)),
-        Button("Scissors", 250, 500, (255, 0, 0)),
-        Button("Paper", 450, 500, (0, 255, 0))
+        Button("Scissors", 275, 500, (255, 0, 0)),
+        Button("Paper", 500, 500, (0, 255, 0))
         ]
 
 
@@ -134,23 +71,34 @@ def main():
     n = Network()
     # Obtém o número do jogador
     player = int(n.getP())
+    antiStress1 = n.getAnti()
+    # Obtém o anti-stress
     print("You are player", player)
-
-    anti = AntiStress(50, 50, width, height, (0, 0, 255))
 
     while run:
         clock.tick(60)
         try:
             # Envio de solicitação de jogo
             game = n.send("get")
+            # Get Anti stress;
+            if player == 0:
+                antiStress2 = game.get_anti_stress(1)
+            else:
+                antiStress2 = game.get_anti_stress(0)
+
         except:
             # Se não recebido de volta, não obtém um jogo
             run = False
             print("Couldn't get game")
             break
 
+        print("1")
+        print(antiStress1)
+        print("2")
+        print(antiStress2)
+
         if game.bothWent():
-            redrawWindow(win, game, player, anti)
+            redrawWindow(win, game, player, antiStress1, antiStress2)
             pygame.time.delay(500)
             try:
                 # Se ambos os jogadores já jogaram, envia o reset
@@ -171,7 +119,7 @@ def main():
 
             win.blit(text, (width/2 - text.get_width()/2, height/8 - text.get_height()/8))
             pygame.display.update()
-            pygame.time.delay(2000)
+            pygame.time.delay(3000)
 
         for event in pygame.event.get():
             # Comportamento do botão de fechar
@@ -186,13 +134,18 @@ def main():
                     if btn.click(pos) and game.connected():
                         if player == 0:
                             if not game.p1Went:
-                                n.send(btn.text)
+                                game = n.send(btn.text)
                         else:
                             if not game.p2Went:
-                                n.send(btn.text)
+                                game = n.send(btn.text)
 
-        anti.move()
-        redrawWindow(win, game, player, anti)
+        game = n.send(antiStress1)
+        if player == 0:
+            antiStress2 = game.get_anti_stress(1)
+        else:
+            antiStress2 = game.get_anti_stress(0)
+        antiStress1.move()
+        redrawWindow(win, game, player, antiStress1, antiStress2)
 
 
 def menu_screen():
