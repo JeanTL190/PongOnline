@@ -4,10 +4,10 @@ import pickle
 from game import Game
 from antiStress import AntiStress
 
-server = "192.168.0.122"
+server = "200.235.88.189"
 port = 5555
 
-server_ip = socket.gethostbyname(server)
+#server_ip = socket.gethostbyname(server)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -44,8 +44,6 @@ def threaded_client(conn, p, gameId):
                 if not data:
                     break
                 else:
-                    print(data)
-                    print(p)
                     # Se o dado enviado for reset, o jogador vai querer jogar outra vez
                     if data == "reset":
                         game.resetWent()
@@ -90,7 +88,7 @@ while True:
     # Dependendo da quantidade de jogadores conectados
     # se você for o jogador 1 ou 2, ele criará uma nova sessão de jogo
     if idCount % 2 == 1:
-        antiStresses[gameId] = [AntiStress(0, 0, 50, 50, (0, 0, 255)), AntiStress(100, 100, 50, 50, (255, 0, 0))]
+        antiStresses[gameId] = [AntiStress(100, 100, 50, 50, (0, 0, 255)), AntiStress(500, 100, 50, 50, (255, 0, 0))]
         games[gameId] = Game(gameId, antiStresses[gameId])
         print("Creating a new game...")
     else:

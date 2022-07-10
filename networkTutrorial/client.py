@@ -12,13 +12,14 @@ pygame.display.set_caption("Client")
 
 def redrawWindow(win, game, p, antiStress1, antiStress2):
     win.fill((128, 128, 128))
+    antiStress1.draw(win)
+    antiStress2.draw(win)
+
     if not(game.connected()):
         font = pygame.font.SysFont("arial", 80)
         text = font.render("Waiting for Player...", True, (255, 0, 0))
         win.blit(text, (width/2 - text.get_width()/2, height/2 - text.get_height()/2))
     else:
-        antiStress1.draw(win)
-        antiStress2.draw(win)
         font = pygame.font.SysFont("arial", 60)
         text = font.render("Your Move", True, (0, 255, 255))
         win.blit(text, (80, 200))
@@ -76,7 +77,7 @@ def main():
     print("You are player", player)
 
     while run:
-        clock.tick(60)
+        clock.tick(30)
         try:
             # Envio de solicitação de jogo
             game = n.send("get")
@@ -91,11 +92,6 @@ def main():
             run = False
             print("Couldn't get game")
             break
-
-        print("1")
-        print(antiStress1)
-        print("2")
-        print(antiStress2)
 
         if game.bothWent():
             redrawWindow(win, game, player, antiStress1, antiStress2)
